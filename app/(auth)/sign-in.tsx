@@ -1,17 +1,39 @@
-import { Image, ScrollView, Text, View } from "react-native";
+import { Alert, Image, ScrollView, Text, View } from "react-native";
 import React, { useState } from "react";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import OAuth from "@/components/OAuth";
+import { useSignIn } from "@clerk/clerk-expo";
 
 const SignIn = () => {
+  const { signIn, setActive, isLoaded } = useSignIn();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
-  const onPressSignIn = async () => {};
+  const onSignInPress = async () => {
+    if (!isLoaded) return;
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: form.email,
+        password: form.password,
+      });
+
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/(root)/(tabs)/home");
+      } else {
+        console.error(JSON.stringify(signInAttempt, null, 2));
+      }
+    } catch (err) {
+      Alert.alert("Error", err?.errors[0]?.longMessage);
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
   return (
     <ScrollView className="flex-1 bg-white">
       <View>
@@ -37,15 +59,15 @@ const SignIn = () => {
           onChangeText={(e) => setForm((prev) => ({ ...prev, password: e }))}
         />
         <CustomButton
-          title="Sign Up"
+          title="Sign In"
           className="mt-6 w-5/6 self-center"
-          onPress={onPressSignIn}
+          onPress={onSignInPress}
         />
         <OAuth />
         <Text className="text-lg text-center font-JakartaMedium text-general-200 mt-10">
-          Already have an account?{" "}
-          <Link href={"/(auth)/sign-in"}>
-            <Text className="text-primary-500">Login</Text>
+          Haven't an account?{" "}
+          <Link href={"/(auth)/sign-up"}>
+            <Text className="text-primary-500">SignUp now</Text>
           </Link>
         </Text>
       </View>

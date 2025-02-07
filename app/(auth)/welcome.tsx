@@ -1,15 +1,22 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import { router } from "expo-router";
 import { onboarding } from "@/constants";
 import CustomButton from "@/components/CustomButton";
+import { useAuth, useSignIn } from "@clerk/clerk-expo";
 
 const Welcome = () => {
-  const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isLastIndex = activeIndex === onboarding.length - 1;
+
+  const { isSignedIn } = useAuth();
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace("/(root)/(tabs)/home");
+    }
+  }, [isSignedIn]);
 
   return (
     <SafeAreaView className="flex-1 items-center">
@@ -20,11 +27,11 @@ const Welcome = () => {
         <Text className="text-black text-md font-JakartaBold">Skip</Text>
       </TouchableOpacity>
       <Swiper
-        ref={swiperRef}
         loop={false}
         dot={<View className="w-[32px] h-[4px] mx-1 bg-[#E2E8F0]" />}
         activeDot={<View className="w-[32px] h-[4px] mx-1 bg-[#0286FF]" />}
         onIndexChanged={(index) => setActiveIndex(index)}
+        index={activeIndex}
       >
         {onboarding.map((item) => (
           <View key={item.id}>
@@ -50,7 +57,7 @@ const Welcome = () => {
         onPress={() => {
           isLastIndex
             ? router.push("/(auth)/sign-up")
-            : swiperRef?.current?.scrollBy(1);
+            : setActiveIndex((prevIndex) => prevIndex + 1);
         }}
       />
     </SafeAreaView>
